@@ -3,7 +3,7 @@ import numpy as np
 import os
 tolerance = 20
 from CServo import CServo
-
+import argparse
 
 # ladowanie klasyfikatorow
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -22,16 +22,16 @@ def check_boundries(x, y, w, h, img, loopcounter):
     loopcounter += 1
     if (x + w)/2 > img.shape[1]/2 - tolerance:
         print('turn_right' + str(loopcounter))
-    servo1.add_ms(10)
+        servo1.add_ms(10)
     if (x + w)/2 < img.shape[1]/2 + tolerance:
         print('turn_left'+ str(loopcounter))
-    servo1.add_ms(-10)
+        servo1.add_ms(-10)
     if (y + h)/2 > img.shape[0]/2 - tolerance:
         print('turn_up' + str(loopcounter))
-    servo2.add_ms(10)
+        servo2.add_ms(10)
     if (y + h)/2 < img.shape[0]/2 + tolerance:
         print('turn_down'+ str(loopcounter))
-    servo2.add_ms(-10)
+        servo2.add_ms(-10)
 
 while 1:
     ret, img = cap.read()
