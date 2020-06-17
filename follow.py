@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
 import os
-tolerance = 20
+import time
+import serial
 from CServo import CServo
 import argparse
 
@@ -9,46 +10,94 @@ import argparse
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 body_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_fullbody.xml')
 
+STM32 = serial.Serial('COM3', 115200, timeout=0.1)
+tolerance = 100
 
 # przechwytywanie obrazu
 cap = cv2.VideoCapture(0)
-loopcounter = 0
-servo1 = CServo(1200, 20)
-servo2 = CServo(1200, 20)
+loop_counter = 0
+servo_x = CServo(1175, tolerance)
+servo_y = CServo(1400, tolerance)
 
 
 
-def check_boundries(x, y, w, h, img, loopcounter):
-    loopcounter += 1
-    if (x + w)/2 > img.shape[1]/2 - tolerance:
-        print('turn_right' + str(loopcounter))
-        servo1.add_ms(10)
-    if (x + w)/2 < img.shape[1]/2 + tolerance:
-        print('turn_left'+ str(loopcounter))
-        servo1.add_ms(-10)
-    if (y + h)/2 > img.shape[0]/2 - tolerance:
-        print('turn_up' + str(loopcounter))
-        servo2.add_ms(10)
-    if (y + h)/2 < img.shape[0]/2 + tolerance:
-        print('turn_down'+ str(loopcounter))
-        servo2.add_ms(-10)
+def serial_read(STM321):
+    data = STM321.readline()
+    if data:
+        data = data.decode()
+        return data
+
+
+def serial_communication():
+    if servo_x.ms < 1000:
+        datax = '0' + str(servo_x.ms)
+    else:
+        datax = str(servo_x.ms)
+    if servo_y.ms < 1000:
+        datay = '0' + str(servo_y.ms)
+    else:
+        datax = str(servo_x.ms)
+        datay = str(servo_y.ms)
+    data = datay + datax
+    print(data)
+    serial_write(STM32, data)
+    print(serial_read(STM32))
+    servo_x.ms = servo_x.ms + 50
+    servo_y.ms = servo_y.ms + 50
+
+
+def serial_write(STM321, data):
+    STM321.write(str(data).encode())
+    time.sleep(1)
+
+# 14501224
+def check_boundaries(x1, y1, cen_x, cen_y):
+    if x1 > cen_x + tolerance:
+        # print('turn_right' + str(loop_counter))
+        servo_x.sub_ms(1)
+    if x1 < cen_x - tolerance:
+        # print('turn_left' + str(loop_counter))
+        servo_x.add_ms(1)
+    # if y1 > cen_y + tolerance:
+    #     # print('turn_up' + str(loop_counter))
+    #     servo_y.sub_ms(1)
+    # if y1 < cen_y - tolerance:
+    #     # print('turn_down' + str(loop_counter))
+    #     servo_y.sub_ms(1)
+    if servo_x.ms > 1850:
+        servo_x.ms = servo_x.ch_ms(1850)
+    if servo_y.ms > 1800:
+        servo_x.ms = servo_y.ch_ms(1800)
+    if servo_x.ms < 500:
+        servo_x.ms = servo_x.ch_ms(500)
+    if servo_y.ms < 1000:
+        servo_x.ms = servo_y.ch_ms(1000)
+
+
+serial_communication()
 
 while 1:
     ret, img = cap.read()
+    # print(img.shape)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    cv2.rectangle(img, (320-tolerance, 240-tolerance), (320+tolerance, 240+tolerance), (0, 0, 255), 2)
     # bodies = body_cascade.detectMultiScale(gray_image)
     faces = face_cascade.detectMultiScale(gray, 1.3, 5)
     for (x, y, w, h) in faces:
-        check_boundries(x, y, w, h, img, loopcounter)
         cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
+        loop_counter += 1
+        if loop_counter == 20:
+            check_boundaries((x + w) / 2, (y + h) / 2, img.shape[1], img.shape[0])
+            serial_communication()
+            loop_counter = 0
+
     cv2.imshow('img', img)
     k = cv2.waitKey(30) & 0xff
     if k == 27:
         break
 
 
+# cap.release()
+# cv2.destroyAllWindows()
 
-cap.release()
-cv2.destroyAllWindows()
-# out.release()
 
