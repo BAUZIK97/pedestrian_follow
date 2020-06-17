@@ -53,15 +53,17 @@ def check_boundaries(x1, y1, cen_x, cen_y):
         servo_y.ch_ms(1000)
 
 
-serial_communication(Data_x,Data_y)
+serial_communication(Data_x, Data_y)
 
 
 while 1:
     ret, img = cap.read()
-    # print(img.shape)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    cv2.rectangle(img, (320-tolerance, 240-tolerance), (320+tolerance, 240+tolerance), (0, 0, 255), 2)
-    # bodies = body_cascade.detectMultiScale(gray_image)
+    img_x = int(img.shape[1] / 2)
+    img_y = int(img.shape[0] / 2)
+    cv2.rectangle(img, (img_x-tolerance, img_y-tolerance),
+                  (img_x+tolerance, img_y+tolerance), (0, 0, 255), 2)
+    # faces = body_cascade.detectMultiScale(gray_image)
     faces = face_cascade.detectMultiScale(gray, 1.3, 5)
     for (x, y, w, h) in faces:
         cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
