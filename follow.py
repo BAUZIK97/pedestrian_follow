@@ -20,9 +20,8 @@ servo_x = CServo(1175, tolerance)
 servo_y = CServo(1400, tolerance)
 
 
-
-def serial_read(STM321):
-    data = STM321.readline()
+def serial_read(stm321):
+    data = stm321.readline()
     if data:
         data = data.decode()
         return data
@@ -30,15 +29,14 @@ def serial_read(STM321):
 
 def serial_communication():
     if servo_x.ms < 1000:
-        datax = '0' + str(servo_x.ms)
-    else:
-        datax = str(servo_x.ms)
+        data_x = '0' + str(servo_x.ms)
     if servo_y.ms < 1000:
-        datay = '0' + str(servo_y.ms)
-    else:
-        datax = str(servo_x.ms)
-        datay = str(servo_y.ms)
-    data = datay + datax
+        data_y = '0' + str(servo_y.ms)
+    if servo_y.ms >= 1000 and servo_x.ms >= 1000:
+        data_x = str(servo_x.ms)
+        data_y = str(servo_y.ms)
+        # data_x = '1850'
+    data = data_y + data_x
     print(data)
     serial_write(STM32, data)
     print(serial_read(STM32))
@@ -46,35 +44,34 @@ def serial_communication():
     servo_y.ms = servo_y.ms + 50
 
 
-def serial_write(STM321, data):
-    STM321.write(str(data).encode())
+def serial_write(stm321, data):
+    stm321.write(str(data).encode())
     time.sleep(1)
 
 # 14501224
+
+
 def check_boundaries(x1, y1, cen_x, cen_y):
     if x1 > cen_x + tolerance:
-        # print('turn_right' + str(loop_counter))
-        servo_x.sub_ms(1)
+        servo_x.sub_ms(2)
     if x1 < cen_x - tolerance:
-        # print('turn_left' + str(loop_counter))
-        servo_x.add_ms(1)
-    # if y1 > cen_y + tolerance:
-    #     # print('turn_up' + str(loop_counter))
-    #     servo_y.sub_ms(1)
-    # if y1 < cen_y - tolerance:
-    #     # print('turn_down' + str(loop_counter))
-    #     servo_y.sub_ms(1)
+        servo_x.add_ms(2)
+    if y1 > cen_y + tolerance:
+        servo_y.sub_ms(1)
+    if y1 < cen_y - tolerance:
+        servo_y.sub_ms(1)
     if servo_x.ms > 1850:
-        servo_x.ms = servo_x.ch_ms(1850)
+        servo_x.sub_ms(2)
     if servo_y.ms > 1800:
-        servo_x.ms = servo_y.ch_ms(1800)
+        servo_y.sub_ms(1)
     if servo_x.ms < 500:
-        servo_x.ms = servo_x.ch_ms(500)
+        servo_x.add_ms(2)
     if servo_y.ms < 1000:
-        servo_x.ms = servo_y.ch_ms(1000)
+        servo_y.add_ms(1)
 
 
 serial_communication()
+
 
 while 1:
     ret, img = cap.read()
@@ -97,7 +94,5 @@ while 1:
         break
 
 
-# cap.release()
-# cv2.destroyAllWindows()
-
-
+cap.release()
+cv2.destroyAllWindows()
