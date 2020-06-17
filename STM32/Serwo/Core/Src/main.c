@@ -49,7 +49,7 @@
 
 /* USER CODE BEGIN PV */
 uint8_t buffer[50];
-int pwm_duty,duty,ADC_Value,duzy;
+int pwm_duty,duty;
 
 /* USER CODE END PV */
 
@@ -62,7 +62,8 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
 
  uint8_t Data[40]; // Tablica przechowujaca wysylana wiadomosc.
  uint16_t size = 0; // Rozmiar wysylanej wiadomosci
@@ -75,10 +76,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
  modulate_x(pwmx_duty);
  modulate_y(pwmy_duty);
  HAL_UART_Transmit_IT(&huart3, Data, size); // Rozpoczecie nadawania danych z wykorzystaniem przerwan
-
  HAL_UART_Receive_IT(&huart3, buffer, 8); // Ponowne włączenie nasłuchiwania
-// HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-}
+ }
 
 void modulate_x(int amp)
   {
@@ -87,59 +86,15 @@ void modulate_x(int amp)
 	duty=amp;
 	int SET_COMPARE=(amp * __HAL_TIM_GET_AUTORELOAD(&htim3))/1000;
 	__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_2,SET_COMPARE);
-//	 htim3.Instance->CCR1 = 87;
   }
+
 void modulate_y(int amp)
   {
 	amp=((amp-500)*0.05)*1.25+25;
 	duty=amp;
 	int SET_COMPARE=(amp * __HAL_TIM_GET_AUTORELOAD(&htim3))/1000;
 	__HAL_TIM_SET_COMPARE(&htim3,TIM_CHANNEL_1,SET_COMPARE);
-//	 htim3.Instance->CCR1 = 87;
   }
-
-
-void HAL_GPIO_EXTI_Callback ( uint16_t GPIO_Pin )
-   {
-  	if( GPIO_Pin == USER_Btn_Pin )
-   	{
-  		duzy+=1;
-  		if(duzy>2) duzy=0;
-  		if (duzy == 0){
-  			HAL_GPIO_WritePin(LD1_GPIO_Port, LD1_Pin, GPIO_PIN_SET);
-  			HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-  			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-  		}
-  		else if(duzy == 1){
-  			HAL_GPIO_WritePin(LD1_GPIO_Port, LD1_Pin, GPIO_PIN_RESET);
-  			HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
-  			HAL_GPIO_WritePin(LD2_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-  		}
-  		else {
-  			HAL_GPIO_WritePin(LD1_GPIO_Port, LD1_Pin, GPIO_PIN_RESET);
-  			HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-  			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-  		}
-   	}
-  }
-//void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-//  {
-//  	if(htim->Instance == TIM4)
-//  	{
-//  		HAL_ADC_Start_IT(&hadc1);
-////  		PID_ERROR =dref_Value- ADC_Value1;
-//  	//	Duty =arm_pid_f32(&PID, PID_ERROR);
-////  		if(Duty<0){
-////  			Duty=0;
-////  		}
-////  		if(Duty>1000){
-////  		Duty=1000;
-////  		}
-////
-////  		if(a==3)modulate(Duty);
-////  		test2();
-//  	}
-//  }
 
 /* USER CODE END 0 */
 
@@ -176,6 +131,7 @@ int main(void)
   MX_USB_OTG_FS_PCD_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
+  HAL_GPIO_WritePin(LD1_GPIO_Port,LD1_Pin, GPIO_PIN_SET);
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim3);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
